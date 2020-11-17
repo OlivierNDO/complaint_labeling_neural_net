@@ -38,7 +38,11 @@ complaint_df = pd.read_csv(config.config_complaints_file, encoding = config.conf
 complaint_df = complaint_df[complaint_df[config.config_complaints_narrative_column].notna()].\
 drop_duplicates(subset = config.config_complaints_narrative_column, keep = 'first')
 
+# Create Product Category Field
 complaint_df['Product_Category'] = [config.config_product_dict.get(x) for x in complaint_df['Product']]
+
+# Split into Train & Test
+train_df, test_df = sklearn.model_selection.train_test_split(complaint_df, test_size = 0.2, random_state = 11172020)
 
 
 ### Define Functions
@@ -91,40 +95,21 @@ def unnest_list_of_lists(LOL):
 ### Execute Functions
 ########################################################################################################
 
-
-
-
-
 # Create Y Array
 one_hot_dict = one_hot_label_dict(complaint_df['Product_Category'])
-y = np.array([one_hot_dict.get(x) for x in complaint_df['Product_Category']])
+train_y = np.array([one_hot_dict.get(x) for x in train_df['Product_Category']])
+test_y = np.array([one_hot_dict.get(x) for x in test_df['Product_Category']])
 
 
 
-# Create X Array
-pipeline = tp.TextProcessingPipeline(string_list = complaint_df[config.config_complaints_narrative_column])
+# Create X Arrays
+pipeline = tp.TextProcessingPipeline(string_list = train_df[config.config_complaints_narrative_column],
+                                     test_string_list = test_df[config.config_complaints_narrative_column])
 
 
-pipeline.tokenizer_fit_and_save()
-
-
-get_unique_counts(complaint_df.Product_Category)
-
-
-
-import configuration as config
-
-
-
-
-
-
-
-
-
-
-
-
+#pipeline.tokenizer_fit_and_save()
+train_sequences = pipeline.tokenizer_load_and_transform_train()
+test_sequences = pipeline.tokenizer_load_and_transform_test()
 
 
 

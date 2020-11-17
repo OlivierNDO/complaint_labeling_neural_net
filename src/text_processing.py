@@ -14,6 +14,21 @@ import sklearn
 from tensorflow.keras.preprocessing.text import Tokenizer
 import time
 
+# Tensorflow / Keras Modules
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Activation, BatchNormalization, GlobalAvgPool2D
+from tensorflow.keras.layers import Add, ZeroPadding2D, AveragePooling2D, GaussianNoise, SeparableConv2D
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img
+from tensorflow.keras.layers import add
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.callbacks import LearningRateScheduler, ReduceLROnPlateau
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
 # Project Modules
 import configuration as config
 
@@ -159,9 +174,11 @@ def clean_text(string_list, replace_punct_with = ' ', punctuation = '!"#$%&\'()*
 
 
 class TextProcessingPipeline:
-    def __init__(self, string_list,
+    def __init__(self,
+                 string_list,
                  test_string_list = None,
                  max_df = 0.7,
+                 max_sequence_length = 300,
                  min_df = 10,
                  max_features = 1000,
                  ngram_range = (1,3),
@@ -176,6 +193,7 @@ class TextProcessingPipeline:
         self.string_list = string_list
         self.test_string_list = test_string_list
         self.max_df = max_df
+        self.max_sequence_length = max_sequence_length
         self.min_df = min_df
         self.max_features = max_features
         self.ngram_range = ngram_range
@@ -254,10 +272,27 @@ class TextProcessingPipeline:
         with open(self.save_token_name, 'wb') as handle:
             pickle.dump(tokenizer_object, handle, protocol = pickle.HIGHEST_PROTOCOL)
         
-        
-    def tokenizer_load_and_transform(self):
-        # in progress
-        return None
+    def tokenizer_load_and_transform_train(self):
+        print_timestamp_message('Processing training set text')
+        clean_text = self.get_cleaned_train_text()
+        print_timestamp_message('Loading saved tokenizer')
+        tokenizer_object = pickle.load(open(self.save_token_name, 'rb'))
+        print_timestamp_message('Converting text to sequences')
+        train_sequences = tokenizer_object.texts_to_sequences(clean_text)
+        train_sequences= pad_sequences(train_sequences, maxlen = self.max_sequence_length)
+        print_timestamp_message('Returning training set sequences')
+        return train_sequences
+    
+    def tokenizer_load_and_transform_test(self):
+        print_timestamp_message('Processing test set text')
+        clean_text_test = self.get_cleaned_test_text()
+        print_timestamp_message('Loading saved tokenizer')
+        tokenizer_object = pickle.load(open(self.save_token_name, 'rb'))
+        print_timestamp_message('Converting text to sequences')
+        test_sequences = tokenizer_object.texts_to_sequences(clean_text_test)
+        test_sequences= pad_sequences(test_sequences, maxlen = self.max_sequence_length)
+        print_timestamp_message('Returning test set sequences')
+        return test_sequences
         
         
         
