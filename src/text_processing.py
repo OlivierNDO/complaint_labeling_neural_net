@@ -293,6 +293,11 @@ class TextProcessingPipeline:
         test_sequences= pad_sequences(test_sequences, maxlen = self.max_sequence_length)
         print_timestamp_message('Returning test set sequences')
         return test_sequences
+    
+    def get_tokenizer_word_index(self):
+        tokenizer_object = pickle.load(open(self.save_token_name, 'rb'))
+        return tokenizer_object.word_index
+        
         
         
         

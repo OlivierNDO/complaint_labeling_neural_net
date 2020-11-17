@@ -3,6 +3,7 @@ config_complaints_file = 'D:/complaint_data/complaints.csv'
 config_complaints_file_encoding = 'cp850'
 config_complaints_narrative_column = 'Consumer complaint narrative'
 config_model_folder = 'D:/complaint_labeling_neural_net/models/'
+config_product_model_save_name = f'{config_model_folder}/lstm_product_classifier.hdf5'
 config_vectorizer_folder = 'D:/complaint_labeling_neural_net/vectorizers/'
 
 
