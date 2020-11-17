@@ -20,6 +20,7 @@ from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Activation, BatchNormalization, GlobalAvgPool2D
 from tensorflow.keras.layers import Add, ZeroPadding2D, AveragePooling2D, GaussianNoise, SeparableConv2D
 from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img
+from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.layers import add
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.optimizers import SGD
@@ -44,8 +45,6 @@ complaint_df['Product_Category'] = [config.config_product_dict.get(x) for x in c
 ########################################################################################################
 
 
-
-
 def one_hot_label_dict(labels):
     """
     One-hot encode labels, returning dictionary of labels and one-hot encoded lists
@@ -63,9 +62,6 @@ def one_hot_label_dict(labels):
         
     one_hot_dict = dict(zip(unique_labels, one_hot_nested_list))
     return one_hot_dict
-
-
-temp = one_hot_labels(complaint_df['Product_Category'])
 
 
 def get_unique_counts(input_list):
@@ -90,6 +86,26 @@ def unnest_list_of_lists(LOL):
     return list(itertools.chain.from_iterable(LOL))
 
 
+
+
+### Execute Functions
+########################################################################################################
+
+
+
+
+
+# Create Y Array
+one_hot_dict = one_hot_label_dict(complaint_df['Product_Category'])
+y = np.array([one_hot_dict.get(x) for x in complaint_df['Product_Category']])
+
+
+
+# Create X Array
+pipeline = tp.TextProcessingPipeline(string_list = complaint_df[config.config_complaints_narrative_column])
+
+
+pipeline.tokenizer_fit_and_save()
 
 
 get_unique_counts(complaint_df.Product_Category)

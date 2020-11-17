@@ -5,12 +5,14 @@ import sys
 sys.path.insert(1, 'D:/complaint_labeling_neural_net/src')
 
 # Python Modules
+import datetime
 import nltk
 import pandas as pd
 import pickle
 import re
 import sklearn
 from tensorflow.keras.preprocessing.text import Tokenizer
+import time
 
 # Project Modules
 import configuration as config
@@ -19,6 +21,17 @@ import configuration as config
 
 ### Define Functions & Classes
 ########################################################################################################
+def print_timestamp_message(message, timestamp_format = '%Y-%m-%d %H:%M:%S'):
+    """
+    Print formatted timestamp followed by custom message
+    
+    Args:
+        message (str): string to concatenate with timestamp
+        timestamp_format (str): format for datetime string. defaults to '%Y-%m-%d %H:%M:%S'
+    """
+    ts_string = datetime.datetime.fromtimestamp(time.time()).strftime(timestamp_format)
+    print(f'{ts_string}: {message}')
+    
 
 def count_each_unique(lst):
     """
@@ -176,20 +189,28 @@ class TextProcessingPipeline:
         self.save_token_name = save_token_name
         
     def get_cleaned_train_text(self):
+        print_timestamp_message('Removing punctuation (1/5)')
         sl_rm_punct = [remove_punctuation(s, self.replace_punct_with, self.punctuation) for s in self.string_list]
+        print_timestamp_message('Removing numeric values (2/5)')
         sl_rm_nums = [remove_numerics(s) for s in sl_rm_punct]
+        print_timestamp_message('Removing stopwords (3/5)')
         sl_rm_stopwords = [remove_stopwords(s, self.word_delimiter, self.use_lowercase, self.stopword_list) for s in sl_rm_nums]
-        sl_rm_substrings = [remove_multiple_substrings(s, self.substring_removals, self.use_lowercase) for s in sl_rm_stopwords]
-        sl_lem_strings = [wordnet_lemmatize_string(s, self.word_delimiter, self.pos) for s in sl_rm_substrings]
+        print_timestamp_message('Performing lemmatization (4/5)')
+        sl_lem_strings = [wordnet_lemmatize_string(s, self.word_delimiter, self.pos) for s in sl_rm_stopwords]
+        print_timestamp_message('Stemming words (5/5)')
         sl_stem_strings = [stem_string_porter(s, self.word_delimiter) for s in sl_lem_strings]
         return sl_stem_strings
     
     def get_cleaned_test_text(self):
+        print_timestamp_message('Removing punctuation (1/5)')
         sl_rm_punct = [remove_punctuation(s, self.replace_punct_with, self.punctuation) for s in self.test_string_list]
+        print_timestamp_message('Removing numeric values (2/5)')
         sl_rm_nums = [remove_numerics(s) for s in sl_rm_punct]
+        print_timestamp_message('Removing stopwords (3/5)')
         sl_rm_stopwords = [remove_stopwords(s, self.word_delimiter, self.use_lowercase, self.stopword_list) for s in sl_rm_nums]
-        sl_rm_substrings = [remove_multiple_substrings(s, self.substring_removals, self.use_lowercase) for s in sl_rm_stopwords]
-        sl_lem_strings = [wordnet_lemmatize_string(s, self.word_delimiter, self.pos) for s in sl_rm_substrings]
+        print_timestamp_message('Performing lemmatization (4/5)')
+        sl_lem_strings = [wordnet_lemmatize_string(s, self.word_delimiter, self.pos) for s in sl_rm_stopwords]
+        print_timestamp_message('Stemming words (5/5)')
         sl_stem_strings = [stem_string_porter(s, self.word_delimiter) for s in sl_lem_strings]
         return sl_stem_strings
         
@@ -236,7 +257,7 @@ class TextProcessingPipeline:
         
     def tokenizer_load_and_transform(self):
         # in progress
-        retun None
+        return None
         
         
         
