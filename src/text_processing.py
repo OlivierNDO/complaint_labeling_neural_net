@@ -7,6 +7,7 @@ sys.path.insert(1, 'D:/complaint_labeling_neural_net/src')
 # Python Modules
 import datetime
 import nltk
+import numpy as np
 import pandas as pd
 import pickle
 import re
@@ -189,7 +190,12 @@ class TextProcessingPipeline:
                  use_lowercase = True,
                  word_delimiter = ' ',
                  save_tfid_name = f'{config.config_vectorizer_folder}tfid_vectorizer.pkl',
-                 save_token_name = f'{config.config_vectorizer_folder}keras_tokenizer.pkl'):    
+                 save_token_name = f'{config.config_vectorizer_folder}keras_tokenizer.pkl',
+                 train_x_save_name = config.config_train_x_save_name,
+                 test_x_save_name = config.config_test_x_save_name,
+                 train_y_save_name = config.config_train_y_save_name,
+                 test_y_save_name = config.config_test_y_save_name
+                 ):    
         self.string_list = string_list
         self.test_string_list = test_string_list
         self.max_df = max_df
@@ -205,6 +211,10 @@ class TextProcessingPipeline:
         self.word_delimiter = word_delimiter
         self.save_tfid_name = save_tfid_name
         self.save_token_name = save_token_name
+        self.train_x_save_name = train_x_save_name
+        self.test_x_save_name = test_x_save_name
+        self.train_y_save_name = train_y_save_name
+        self.test_y_save_name = test_y_save_name
         
     def get_cleaned_train_text(self):
         print_timestamp_message('Removing punctuation (1/5)')
@@ -297,6 +307,14 @@ class TextProcessingPipeline:
     def get_tokenizer_word_index(self):
         tokenizer_object = pickle.load(open(self.save_token_name, 'rb'))
         return tokenizer_object.word_index
+    
+    def load_transformed_train_test_data(self):
+        train_x = np.load(self.train_x_save_name)
+        test_x = np.load(self.test_x_save_name)
+        train_y = np.load(self.train_y_save_name)
+        test_y = np.load(self.test_y_save_name)
+        return train_x, train_y, test_x, test_y
+        
         
         
         
