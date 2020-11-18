@@ -36,37 +36,21 @@ import text_processing as tp
 import misc_functions as mf
 
 
-### File Reading
+
+### Load Data
 ########################################################################################################
-# Read Csv File from CFPB
-complaint_df = pd.read_csv(config.config_complaints_file, encoding = config.config_complaints_file_encoding)
-complaint_df = complaint_df[complaint_df[config.config_complaints_narrative_column].notna()].\
-drop_duplicates(subset = config.config_complaints_narrative_column, keep = 'first')
-
-# Create Product Category Field
-complaint_df['Product_Category'] = [config.config_product_dict.get(x) for x in complaint_df['Product']]
-
-# Split into Train & Test
-train_df, test_df = sklearn.model_selection.train_test_split(complaint_df, test_size = 0.2, random_state = 11172020)
-
-
-
-
-
-### Execute Functions
-########################################################################################################
-
 # Load Product & Text Data Using TextProcessingPipeline Class
 pipeline = tp.TextProcessingPipeline(string_list = None, test_string_list = None)
 train_sequences, train_y, test_sequences, test_y = pipeline.load_transformed_train_test_data()
 
 
-
+### Model Architecture
+###############################################################################
 def bidirectional_lstm_classifier(input_dim, output_dim, input_length, n_classes, word_index, dropout_rate = 0.2):
     
     x = Sequential()
     x.add(Embedding(input_dim = len(word_index) + 1, output_dim = output_dim, input_length = input_length, trainable = True))
-    #x.add(SpatialDropout1D(dropout_rate))
+    x.add(SpatialDropout1D(dropout_rate))
     x.add(Bidirectional(LSTM(output_dim, return_sequences = True)))
     x.add(Bidirectional(LSTM(output_dim, return_sequences = False)))
     x.add(Dense(output_dim, activation = 'relu'))
@@ -76,27 +60,24 @@ def bidirectional_lstm_classifier(input_dim, output_dim, input_length, n_classes
     return x
 
 
-
 ### Model Fitting
 ###############################################################################
+
+#tf.compat.v2.enable_v2_behavior()
+
 # Clear Session (this removes any trained model from your PC's memory)
 train_start_time = time.time()
 keras.backend.clear_session()
 
-# Disable Eager Execution (necessary for multi_gpu_model)
-tf.compat.v1.disable_eager_execution()
-
 # Define Model Object and Scale Across GPUs
 model = bidirectional_lstm_classifier(input_dim = train_sequences.shape[1],
-                                      output_dim = 100,
+                                      output_dim = 300,
                                       input_length = train_sequences.shape[1],
                                       n_classes = train_y.shape[1],
                                       word_index = pipeline.get_tokenizer_word_index())
 
-parallel_model = multi_gpu_model(model, gpus = mf.get_number_gpu())
-
-# Compile Parallel Model
-parallel_model.compile(loss='categorical_crossentropy', optimizer = Adam(0.0001), metrics = ['categorical_accuracy'])
+# Compile Model
+model.compile(loss='categorical_crossentropy', optimizer = Adam(0.0001), metrics = ['categorical_accuracy'])
 
 
 # Keras Model Checkpoints (used for early stopping & logging epoch accuracy)
@@ -104,11 +85,11 @@ check_point = keras.callbacks.ModelCheckpoint(config.config_product_model_save_n
 early_stop = keras.callbacks.EarlyStopping(monitor = 'val_loss', mode = 'min',  patience = 15)
 
 # Model Fit
-parallel_model.fit(train_sequences,
+model.fit(train_sequences,
           train_y,
           epochs = 5,
           validation_split = 0.2,
-          batch_size = 10,
+          batch_size = 5,
           callbacks = [check_point, early_stop],
           class_weight = mf.make_class_weight_dict(train_y, return_dict = True))
 
