@@ -21,7 +21,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Activation, BatchNormalization, SpatialDropout1D
-from tensorflow.keras.layers import Add, ZeroPadding2D, AveragePooling2D, GaussianNoise, SeparableConv2D, Embedding, Bidirectional, LSTM, GRU
+from tensorflow.keras.layers import Add, ZeroPadding2D, AveragePooling2D, GaussianNoise, SeparableConv2D, Embedding, Bidirectional, LSTM, GRU, Attention
 from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.layers import add
@@ -41,13 +41,17 @@ import misc_functions as mf
 
 ### Load Data
 ########################################################################################################
-# Load Product & Text Data Using TextProcessingPipeline Class
+# Load Product & Text Data
 pipeline = tp.TextProcessingPipeline(string_list = None, test_string_list = None)
-train_sequences, train_y, test_sequences, test_y = pipeline.load_transformed_train_test_product_data()
+train_x_product, train_y_product, test_x_product, test_y_product = pipeline.load_transformed_train_test_product_data()
 
+# Load Issue & Text Data
+train_x_issue, train_y_issue, test_x_issue, test_y_issue = pipeline.load_transformed_train_test_issue_data()
 
-# Separate Validation Set
-train_sequences, valid_sequences, train_y, valid_y = sklearn.model_selection.train_test_split(train_sequences, train_y, test_size = 0.2, random_state = 11182020)
+# Separate Validation Sets
+train_x_product, valid_x_product, train_y_product, valid_y_product = sklearn.model_selection.train_test_split(train_x_product, train_y_product, test_size = 0.2, random_state = 11182020)
+train_x_issue, valid_x_issue, train_y_issue, valid_y_issue = sklearn.model_selection.train_test_split(train_x_issue, train_y_issue, test_size = 0.2, random_state = 11182020)
+
 
 
 ### Model Architecture
@@ -56,16 +60,25 @@ def bidirectional_lstm_classifier(input_dim, output_dim, input_length, n_classes
     
     x = Sequential()
     x.add(Embedding(input_dim = len(word_index) + 1, output_dim = output_dim, input_length = input_length, trainable = True))
-    #x.add(SpatialDropout1D(dropout_rate))
     x.add(GRU(32))
-    #x.add(Bidirectional(LSTM(output_dim, return_sequences = True)))
-    #x.add(Bidirectional(LSTM(output_dim, return_sequences = False)))
     x.add(Dense(output_dim, activation = 'relu'))
     x.add(Dropout(dropout_rate))
     x.add(Dense(output_dim, activation = 'relu'))
     x.add(Dense(n_classes, activation = 'softmax'))
     return x
 
+
+def lstm_attention_classifier(input_dim, output_dim, input_length, n_classes, word_index, dropout_rate = 0.2):
+    x = Sequential()
+    x.add(Embedding(input_dim = len(word_index) + 1, output_dim = output_dim, input_length = input_length, trainable = True))
+    x.add(tf.compat.v1.keras.layers.CuDNNLSTM(100, return_sequences = False))
+    #x.add(Attention())
+    x.add(Dense(output_dim, activation = 'relu'))
+    x.add(Dropout(dropout_rate))
+    x.add(Dense(output_dim, activation = 'relu'))
+    x.add(Dense(n_classes, activation = 'softmax'))
+    return x
+    
 
 # Generator to Augment Images During Training
 def batch_generator(x_arr, y_arr, batch_size = 20):
@@ -159,18 +172,18 @@ class CyclicalRateSchedule:
 
 
 
-### Model Fitting
+### Model Fitting - Issues (Complaints)
 ###############################################################################
                     
 # Create Generators
 use_batch_size = 20
-train_gen = batch_generator(train_sequences, train_y, batch_size = use_batch_size)
-valid_gen = batch_generator(valid_sequences, valid_y, batch_size = use_batch_size)
-test_gen = batch_generator(test_sequences, test_y, batch_size = use_batch_size)
+train_gen = batch_generator(train_x_issue, train_y_issue, batch_size = use_batch_size)
+valid_gen = batch_generator(valid_x_issue, valid_y_issue, batch_size = use_batch_size)
+test_gen = batch_generator(test_x_issue, test_y_issue, batch_size = use_batch_size)
 
 # Calculate Training Steps
-tsteps = int(train_sequences.shape[0]) // use_batch_size
-vsteps = int(valid_sequences.shape[0]) // use_batch_size
+tsteps = int(train_x_issue.shape[0]) // use_batch_size
+vsteps = int(train_x_issue.shape[0]) // use_batch_size
 
 # Create Learning Rate Schedule
 lr_schedule = CyclicalRateSchedule(min_lr = 0.000015,
@@ -195,19 +208,19 @@ train_start_time = time.time()
 keras.backend.clear_session()
 
 # Define Model Object and Scale Across GPUs
-model = bidirectional_lstm_classifier(input_dim = train_sequences.shape[1],
+model = lstm_attention_classifier(input_dim = train_x_issue.shape[1],
                                       output_dim = 100,
-                                      input_length = train_sequences.shape[1],
-                                      n_classes = train_y.shape[1],
+                                      input_length = train_x_issue.shape[1],
+                                      n_classes = train_y_issue.shape[1],
                                       word_index = pipeline.get_tokenizer_word_index())
 
 # Compile Model
-model.compile(loss='categorical_crossentropy', optimizer = Adam(0.0001), metrics = ['categorical_accuracy'])
+model.compile(loss='categorical_crossentropy', optimizer = Adam(), metrics = ['categorical_accuracy'])
 
 
 # Keras Model Checkpoints (used for early stopping & logging epoch accuracy)
-check_point = keras.callbacks.ModelCheckpoint(config.config_product_model_save_name, monitor = 'val_loss', verbose = 1, save_best_only = True, mode = 'min')
-early_stop = keras.callbacks.EarlyStopping(monitor = 'val_loss', mode = 'min',  patience = 15)
+check_point = keras.callbacks.ModelCheckpoint(config.config_issue_model_save_name, monitor = 'val_loss', verbose = 1, save_best_only = True, mode = 'min')
+early_stop = keras.callbacks.EarlyStopping(monitor = 'val_loss', mode = 'min',  patience = 10)
 
 # Model Fit
 model.fit(train_gen,
@@ -216,7 +229,7 @@ model.fit(train_gen,
           steps_per_epoch = tsteps,
           validation_steps = vsteps,
           callbacks = [check_point, early_stop, lr_schedule.lr_scheduler()],
-          class_weight = mf.make_class_weight_dict(train_y, return_dict = True))
+          class_weight = mf.make_class_weight_dict(train_y_issue, return_dict = True))
 
 
 train_end_time = time.time()

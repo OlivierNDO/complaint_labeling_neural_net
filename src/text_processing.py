@@ -194,7 +194,11 @@ class TextProcessingPipeline:
                  train_x_save_name = config.config_train_x_save_name,
                  test_x_save_name = config.config_test_x_save_name,
                  train_y_save_name = config.config_train_y_save_name,
-                 test_y_save_name = config.config_test_y_save_name
+                 test_y_save_name = config.config_test_y_save_name,
+                 train_x_save_name_issue = config.config_train_x_save_name_issue,
+                 test_x_save_name_issue = config.config_test_x_save_name_issue,
+                 train_y_save_name_issue = config.config_train_y_save_name_issue,
+                 test_y_save_name_issue = config.config_test_y_save_name_issue
                  ):    
         self.string_list = string_list
         self.test_string_list = test_string_list
@@ -215,6 +219,10 @@ class TextProcessingPipeline:
         self.test_x_save_name = test_x_save_name
         self.train_y_save_name = train_y_save_name
         self.test_y_save_name = test_y_save_name
+        self.train_x_save_name_issue = train_x_save_name_issue
+        self.test_x_save_name_issue = test_x_save_name_issue
+        self.train_y_save_name_issue = train_y_save_name_issue
+        self.test_y_save_name_issue = test_y_save_name_issue
         
     def get_cleaned_train_text(self):
         print_timestamp_message('Removing punctuation (1/5)')
@@ -308,11 +316,18 @@ class TextProcessingPipeline:
         tokenizer_object = pickle.load(open(self.save_token_name, 'rb'))
         return tokenizer_object.word_index
     
-    def load_transformed_train_test_data(self):
+    def load_transformed_train_test_product_data(self):
         train_x = np.load(self.train_x_save_name)
         test_x = np.load(self.test_x_save_name)
         train_y = np.load(self.train_y_save_name)
         test_y = np.load(self.test_y_save_name)
+        return train_x, train_y, test_x, test_y
+    
+    def load_transformed_train_test_issue_data(self):
+        train_x = np.load(self.train_x_save_name_issue)
+        test_x = np.load(self.test_x_save_name_issue)
+        train_y = np.load(self.train_y_save_name_issue)
+        test_y = np.load(self.test_y_save_name_issue)
         return train_x, train_y, test_x, test_y
         
         
