@@ -8,7 +8,6 @@ config_issue_model_save_name = f'{config_model_folder}lstm_issue_classifier.hdf5
 config_vectorizer_folder = 'D:/complaint_labeling_neural_net/vectorizers/'
 config_proc_data_dir = 'D:/complaint_labeling_neural_net/processed_data/'
 
-
 # Product File Names
 config_train_x_save_name_product = f'{config_proc_data_dir}train_sequences_product.npy'
 config_test_x_save_name_product = f'{config_proc_data_dir}test_sequences_product.npy'
@@ -51,18 +50,12 @@ config_train_y_save_name_sl = f'{config_proc_data_dir}train_y_sl.npy'
 config_test_y_save_name_sl = f'{config_proc_data_dir}test_y_sl.npy'
 config_tokenizer_save_name_sl = f'{config_vectorizer_folder}keras_tokenizer_sl.pkl'
 
-
-
 # Data Configuration
-
 config_use_products = ['Credit reporting, credit repair services, or other personal consumer reports',
                        'Credit card or prepaid card',
                        'Debt collection',
                        'Checking or savings account',
                        'Student loan']
-
-
-
 
 # Mapping of 'Product | Issue | Sub-issue' to Complaint Category
 config_product_issue_list = ["Checking or savings account | Managing an account",
