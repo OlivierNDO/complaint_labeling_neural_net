@@ -214,3 +214,10 @@ class RNNClassificationTrainer:
         train_end_time = time.time()
         mf.sec_to_time_elapsed(train_end_time, train_start_time)
         
+    def load(self):
+        return tf.keras.models.load_model(self.model_save_name)
+        
+        
+        
+        
+        

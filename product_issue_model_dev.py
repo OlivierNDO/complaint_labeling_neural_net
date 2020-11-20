@@ -75,6 +75,9 @@ complaint_classifier = m.RNNClassificationTrainer(model = complaint_model,
 complaint_classifier.fit()
 
 
+final_complaint_model = complaint_classifier.load()
+pred_test_complaint = final_complaint_model.predict(test_x_issue)
+
 
 ### Model Fitting - Product
 ###############################################################################

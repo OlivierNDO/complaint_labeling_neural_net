@@ -332,8 +332,12 @@ class TextProcessingPipeline:
         
         
         
-        
-        
+### To Do
+### N-grams
+### remove contractions
+### part of speech tokenized features & counts
+### n - LDA topic models outputs as features
+### 
         
         
         
