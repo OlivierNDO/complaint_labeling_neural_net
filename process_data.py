@@ -34,7 +34,7 @@ from tensorflow.keras.utils import multi_gpu_model
 import configuration as config
 import text_processing as tp
 import misc_functions as mf
-
+ 
 
 ### File Reading
 ########################################################################################################
