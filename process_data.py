@@ -82,8 +82,8 @@ train_y_checking= np.array([one_hot_dict_checking.get(x) for x in train_df_check
 test_y_checking = np.array([one_hot_dict_checking.get(x) for x in test_df_checking['Issue']])
 
 # X Variables
-pipeline = tp.TextProcessingPipeline(string_list = train_df[config.config_complaints_narrative_column],
-                                     test_string_list = test_df[config.config_complaints_narrative_column],
+pipeline = tp.TextProcessingPipeline(string_list = train_df_checking[config.config_complaints_narrative_column],
+                                     test_string_list = test_df_checking[config.config_complaints_narrative_column],
                                      save_token_name = config.config_tokenizer_save_name_checking)
 
 pipeline.tokenizer_fit_and_save()
@@ -106,8 +106,8 @@ train_y_card= np.array([one_hot_dict_card.get(x) for x in train_df_card['Issue']
 test_y_card = np.array([one_hot_dict_card.get(x) for x in test_df_card['Issue']])
 
 # X Variables
-pipeline = tp.TextProcessingPipeline(string_list = train_df[config.config_complaints_narrative_column],
-                                     test_string_list = test_df[config.config_complaints_narrative_column],
+pipeline = tp.TextProcessingPipeline(string_list = train_df_card[config.config_complaints_narrative_column],
+                                     test_string_list = test_df_card[config.config_complaints_narrative_column],
                                      save_token_name = config.config_tokenizer_save_name_card)
 
 pipeline.tokenizer_fit_and_save()
@@ -130,8 +130,8 @@ train_y_cr= np.array([one_hot_dict_cr.get(x) for x in train_df_cr['Issue']])
 test_y_cr = np.array([one_hot_dict_cr.get(x) for x in test_df_cr['Issue']])
 
 # X Variables
-pipeline = tp.TextProcessingPipeline(string_list = train_df[config.config_complaints_narrative_column],
-                                     test_string_list = test_df[config.config_complaints_narrative_column],
+pipeline = tp.TextProcessingPipeline(string_list = train_df_cr[config.config_complaints_narrative_column],
+                                     test_string_list = test_df_cr[config.config_complaints_narrative_column],
                                      save_token_name = config.config_tokenizer_save_name_cr)
 
 pipeline.tokenizer_fit_and_save()
@@ -154,8 +154,8 @@ train_y_dc= np.array([one_hot_dict_dc.get(x) for x in train_df_dc['Issue']])
 test_y_dc = np.array([one_hot_dict_dc.get(x) for x in test_df_dc['Issue']])
 
 # X Variables
-pipeline = tp.TextProcessingPipeline(string_list = train_df[config.config_complaints_narrative_column],
-                                     test_string_list = test_df[config.config_complaints_narrative_column],
+pipeline = tp.TextProcessingPipeline(string_list = train_df_dc[config.config_complaints_narrative_column],
+                                     test_string_list = test_df_dc[config.config_complaints_narrative_column],
                                      save_token_name = config.config_tokenizer_save_name_dc)
 
 pipeline.tokenizer_fit_and_save()
@@ -178,8 +178,8 @@ train_y_sl= np.array([one_hot_dict_sl.get(x) for x in train_df_sl['Issue']])
 test_y_sl = np.array([one_hot_dict_sl.get(x) for x in test_df_sl['Issue']])
 
 # X Variables
-pipeline = tp.TextProcessingPipeline(string_list = train_df[config.config_complaints_narrative_column],
-                                     test_string_list = test_df[config.config_complaints_narrative_column],
+pipeline = tp.TextProcessingPipeline(string_list = train_df_sl[config.config_complaints_narrative_column],
+                                     test_string_list = test_df_sl[config.config_complaints_narrative_column],
                                      save_token_name = config.config_tokenizer_save_name_sl)
 
 pipeline.tokenizer_fit_and_save()

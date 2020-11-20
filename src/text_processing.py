@@ -170,177 +170,18 @@ def clean_text(string_list, replace_punct_with = ' ', punctuation = '!"#$%&\'()*
     sl_rm_stopwords = [remove_stopwords(s, word_delimiter, use_lowercase) for s in sl_rm_nums]
     sl_lem_strings = [wordnet_lemmatize_string(s, word_delimiter, pos) for s in sl_rm_stopwords]
     sl_stem_strings = [stem_string_porter(s, word_delimiter) for s in sl_lem_strings]
-    return sl_stem_strings
-
-
-
-class TextProcessingPipeline0:
-    def __init__(self,
-                 string_list,
-                 test_string_list = None,
-                 max_df = 0.7,
-                 max_sequence_length = 300,
-                 min_df = 10,
-                 max_features = 1000,
-                 ngram_range = (1,3),
-                 pos = 'n',
-                 punctuation = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~',
-                 replace_punct_with = ' ',
-                 stopword_list = nltk.corpus.stopwords.words('english'),
-                 use_lowercase = True,
-                 word_delimiter = ' ',
-                 save_tfid_name = f'{config.config_vectorizer_folder}tfid_vectorizer.pkl',
-                 save_token_name = f'{config.config_vectorizer_folder}keras_tokenizer.pkl',
-                 train_x_save_name = config.config_train_x_save_name,
-                 test_x_save_name = config.config_test_x_save_name,
-                 train_y_save_name = config.config_train_y_save_name,
-                 test_y_save_name = config.config_test_y_save_name,
-                 train_x_save_name_issue = config.config_train_x_save_name_issue,
-                 test_x_save_name_issue = config.config_test_x_save_name_issue,
-                 train_y_save_name_issue = config.config_train_y_save_name_issue,
-                 test_y_save_name_issue = config.config_test_y_save_name_issue
-                 ):    
-        self.string_list = string_list
-        self.test_string_list = test_string_list
-        self.max_df = max_df
-        self.max_sequence_length = max_sequence_length
-        self.min_df = min_df
-        self.max_features = max_features
-        self.ngram_range = ngram_range
-        self.pos = pos
-        self.punctuation = punctuation
-        self.replace_punct_with = replace_punct_with
-        self.stopword_list = stopword_list
-        self.use_lowercase = use_lowercase
-        self.word_delimiter = word_delimiter
-        self.save_tfid_name = save_tfid_name
-        self.save_token_name = save_token_name
-        self.train_x_save_name = train_x_save_name
-        self.test_x_save_name = test_x_save_name
-        self.train_y_save_name = train_y_save_name
-        self.test_y_save_name = test_y_save_name
-        self.train_x_save_name_issue = train_x_save_name_issue
-        self.test_x_save_name_issue = test_x_save_name_issue
-        self.train_y_save_name_issue = train_y_save_name_issue
-        self.test_y_save_name_issue = test_y_save_name_issue
-        
-    def get_cleaned_train_text(self):
-        print_timestamp_message('Removing punctuation (1/5)')
-        sl_rm_punct = [remove_punctuation(s, self.replace_punct_with, self.punctuation) for s in self.string_list]
-        print_timestamp_message('Removing numeric values (2/5)')
-        sl_rm_nums = [remove_numerics(s) for s in sl_rm_punct]
-        print_timestamp_message('Removing stopwords (3/5)')
-        sl_rm_stopwords = [remove_stopwords(s, self.word_delimiter, self.use_lowercase, self.stopword_list) for s in sl_rm_nums]
-        print_timestamp_message('Performing lemmatization (4/5)')
-        sl_lem_strings = [wordnet_lemmatize_string(s, self.word_delimiter, self.pos) for s in sl_rm_stopwords]
-        print_timestamp_message('Stemming words (5/5)')
-        sl_stem_strings = [stem_string_porter(s, self.word_delimiter) for s in sl_lem_strings]
-        return sl_stem_strings
-    
-    def get_cleaned_test_text(self):
-        print_timestamp_message('Removing punctuation (1/5)')
-        sl_rm_punct = [remove_punctuation(s, self.replace_punct_with, self.punctuation) for s in self.test_string_list]
-        print_timestamp_message('Removing numeric values (2/5)')
-        sl_rm_nums = [remove_numerics(s) for s in sl_rm_punct]
-        print_timestamp_message('Removing stopwords (3/5)')
-        sl_rm_stopwords = [remove_stopwords(s, self.word_delimiter, self.use_lowercase, self.stopword_list) for s in sl_rm_nums]
-        print_timestamp_message('Performing lemmatization (4/5)')
-        sl_lem_strings = [wordnet_lemmatize_string(s, self.word_delimiter, self.pos) for s in sl_rm_stopwords]
-        print_timestamp_message('Stemming words (5/5)')
-        sl_stem_strings = [stem_string_porter(s, self.word_delimiter) for s in sl_lem_strings]
-        return sl_stem_strings
-        
-    def get_vectorized_text_and_feature_names(self):
-        clean_text = self.get_cleaned_text()
-        vectorizer_object = sklearn.feature_extraction.text.TfidfVectorizer(max_df = self.max_df,
-                                                                            min_df = self.min_df,
-                                                                            max_features = self.max_features,
-                                                                            ngram_range = self.ngram_range)
-        return vectorizer_object.fit_transform(clean_text), vectorizer_object.get_feature_names()
-        
-    def get_vectorized_text_and_feature_names_train_test(self):
-        clean_text = self.get_cleaned_train_text()
-        clean_text_test = self.get_cleaned_test_text()
-        vectorizer_object = sklearn.feature_extraction.text.TfidfVectorizer(max_df = self.max_df,
-                                                                            min_df = self.min_df,
-                                                                            max_features = self.max_features,
-                                                                            ngram_range = self.ngram_range)
-        
-        train_vec = vectorizer_object.fit_transform(clean_text)
-        test_vec = vectorizer_object.fit_transform(clean_text_test)
-        feat_names = vectorizer_object.get_feature_names()
-        return train_vec, test_vec, feat_names
-        
-    def vectorizer_fit_and_save(self):
-        clean_text = self.get_cleaned_train_text()
-        vectorizer_object = sklearn.feature_extraction.text.TfidfVectorizer(max_df = self.max_df,
-                                                                            min_df = self.min_df,
-                                                                            max_features = self.max_features,
-                                                                            ngram_range = self.ngram_range)
-        
-        train_vec = vectorizer_object.fit(clean_text)
-        print(f'Saving tfid vectorizer in file: {self.save_tfid_name}')
-        pickle.dump(train_vec, open(self.save_tfid_name, "wb"))
-    
-    def tokenizer_fit_and_save(self):
-        clean_text = self.get_cleaned_train_text()
-        tokenizer_object = Tokenizer(num_words = self.max_features)
-        tokenizer_object.fit_on_texts(clean_text)
-        print(f'Saving keras tokenizer in file: {self.save_token_name}')
-        with open(self.save_token_name, 'wb') as handle:
-            pickle.dump(tokenizer_object, handle, protocol = pickle.HIGHEST_PROTOCOL)
-        
-    def tokenizer_load_and_transform_train(self):
-        print_timestamp_message('Processing training set text')
-        clean_text = self.get_cleaned_train_text()
-        print_timestamp_message('Loading saved tokenizer')
-        tokenizer_object = pickle.load(open(self.save_token_name, 'rb'))
-        print_timestamp_message('Converting text to sequences')
-        train_sequences = tokenizer_object.texts_to_sequences(clean_text)
-        train_sequences= pad_sequences(train_sequences, maxlen = self.max_sequence_length)
-        print_timestamp_message('Returning training set sequences')
-        return train_sequences
-    
-    def tokenizer_load_and_transform_test(self):
-        print_timestamp_message('Processing test set text')
-        clean_text_test = self.get_cleaned_test_text()
-        print_timestamp_message('Loading saved tokenizer')
-        tokenizer_object = pickle.load(open(self.save_token_name, 'rb'))
-        print_timestamp_message('Converting text to sequences')
-        test_sequences = tokenizer_object.texts_to_sequences(clean_text_test)
-        test_sequences= pad_sequences(test_sequences, maxlen = self.max_sequence_length)
-        print_timestamp_message('Returning test set sequences')
-        return test_sequences
-    
-    def get_tokenizer_word_index(self):
-        tokenizer_object = pickle.load(open(self.save_token_name, 'rb'))
-        return tokenizer_object.word_index
-    
-    def load_transformed_train_test_product_data(self):
-        train_x = np.load(self.train_x_save_name)
-        test_x = np.load(self.test_x_save_name)
-        train_y = np.load(self.train_y_save_name)
-        test_y = np.load(self.test_y_save_name)
-        return train_x, train_y, test_x, test_y
-    
-    def load_transformed_train_test_issue_data(self):
-        train_x = np.load(self.train_x_save_name_issue)
-        test_x = np.load(self.test_x_save_name_issue)
-        train_y = np.load(self.train_y_save_name_issue)
-        test_y = np.load(self.test_y_save_name_issue)
-        return train_x, train_y, test_x, test_y
-    
+    return sl_stem_strings    
     
     
 class TextProcessingPipeline:
     def __init__(self,
                  string_list,
                  test_string_list = None,
-                 save_token_name = f'{config.config_vectorizer_folder}keras_tokenizer.pkl',
-                 train_x_save_name = config.config_train_x_save_name,
-                 test_x_save_name = config.config_test_x_save_name,
-                 train_y_save_name = config.config_train_y_save_name,
-                 test_y_save_name = config.config_test_y_save_name,
+                 save_token_name = config.config_tokenizer_save_name_product,
+                 train_x_save_name = config.config_train_x_save_name_product,
+                 test_x_save_name = config.config_test_x_save_name_product,
+                 train_y_save_name = config.config_train_y_save_name_product,
+                 test_y_save_name = config.config_test_y_save_name_product,
                  validation_size = 0.2,
                  random_state = 11202020,
                  max_df = 0.7,
