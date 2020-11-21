@@ -6,6 +6,7 @@ sys.path.insert(1, 'D:/complaint_labeling_neural_net/src')
 
 # Python Modules
 import datetime
+import functools
 import nltk
 import numpy as np
 import pandas as pd
@@ -14,6 +15,7 @@ import re
 import sklearn
 from tensorflow.keras.preprocessing.text import Tokenizer
 import time
+import tqdm
 
 # Tensorflow / Keras Modules
 import tensorflow as tf
@@ -32,7 +34,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 # Project Modules
 import configuration as config
-
+import misc_functions as mf
 
 
 ### Define Functions & Classes
@@ -66,9 +68,23 @@ def count_each_unique(lst):
     return output_df
 
 
+def replace_contractions(input_string, contraction_dict = config.config_contraction_dict, delimiter = ' '):
+    """
+    Replace contractions with full words using a dictionary
+    Args:
+        input_string (str): string within which to replace contractions
+        contraction_dict (dictionary): dictionary with contractions and spelled out alternatives
+    Returns:
+        string
+    """
+    lower_string = input_string.lower()
+    for w, i in contraction_dict.items():
+        lower_string = lower_string.replace(w.lower(), i)
+    return lower_string
+
 
 def remove_stopwords(input_string, word_delimiter = ' ', use_lowercase = True,
-                     stopword_list = nltk.corpus.stopwords.words('english')):
+                     stopword_list = nltk.corpus.stopwords.words('english') + config.config_custom_stopwords):
    """
    Remove stopwords from a string
    Args:
@@ -136,23 +152,64 @@ def stem_string_porter(input_string, word_delimiter = ' '):
    return word_delimiter.join([stemmer_object.stem(w) for w in input_string.split(word_delimiter)])
 
 
-def wordnet_lemmatize_string(input_string, word_delimiter = ' ', pos = 'n'):
+def get_pos_wordnet(word_string):
+    """
+    Get part of speech tag from nltk wordnet lemmatizer
+    Args:
+        word_string (str): string representing single word
+    Returns:
+        string
+    """
+    pos_tag = nltk.pos_tag([word_string])[0][1][0].upper()
+    pos_tag_dict = {'J' : nltk.corpus.wordnet.ADJ,
+                    'N' : nltk.corpus.wordnet.NOUN,
+                    'V' : nltk.corpus.wordnet.VERB,
+                    'R' : nltk.corpus.wordnet.ADV}
+    
+    return pos_tag_dict.get(pos_tag, nltk.corpus.wordnet.NOUN)
+
+
+def wordnet_lemmatize_string(input_string, word_delimiter = ' ', maxsize = 50000):
    """
    Use NLTKs PorterStemmer() class to stem every word in a string
    Args:
        input_string (str): string
-       word_delimiter (str): delimiter used in .split() to separate words in a string. defaults to ' '.
-       pos (str): part of speech fed into wordnet lemmatization class. defaults to 'n' (noun)
+       word_delimiter (str): delimiter used in .split() to separate words in a string. defaults to ' '
+       maxsize (int): maximum cache size for lemmatizer. defaults to 50000.
    Returns:
        string
    """
-   lemmatizer_object = nltk.stem.WordNetLemmatizer()
-   return word_delimiter.join([lemmatizer_object.lemmatize(w, pos = pos) for w in input_string.split(word_delimiter)])
+   lemmatizer = nltk.stem.WordNetLemmatizer()
+   lemmatize = functools.lru_cache(maxsize = maxsize)(lemmatizer.lemmatize)
+   return word_delimiter.join([lemmatize(w, pos = get_pos_wordnet(w)) for w in nltk.word_tokenize(input_string)])
 
 
+def remove_non_alpha(input_string, replace_with = ' '):
+    """
+    Remove non-alphabetic characters from a string
+    Args:
+        input_string (str): string from which to remove non-alphabetic characters
+        replace_with (str): string to replace non-alphabetic characters. defaults to ' '.
+    Returns:
+        string
+    """
+    return re.compile('[^a-zA-Z]').sub(replace_with, input_string)
 
 
-def clean_text(string_list, replace_punct_with = ' ', punctuation = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~', word_delimiter = ' ', use_lowercase = True, pos = 'n'):
+def get_word_counts(input_string_list, delimiter = ' '):
+    """
+    Get counts of each unique word in a list of strings
+    Args:
+        input_string_list (list): list of strings
+        delimiter (str): delimiter used in .split() to separate words in a string. defaults to ' '.
+    """
+    lower_string_list = mf.unnest_list_of_lists([s.lower().split(delimiter) for s in tqdm.tqdm(input_string_list)])
+    return mf.get_unique_counts(lower_string_list)
+
+
+def clean_text(string_list, contraction_dict = config.config_contraction_dict,
+               replace_punct_with = ' ', punctuation = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~',
+               word_delimiter = ' ', use_lowercase = True):
     """
     Apply sequential text cleaning functions to a list of strings
     Args:
@@ -165,12 +222,18 @@ def clean_text(string_list, replace_punct_with = ' ', punctuation = '!"#$%&\'()*
     Returns:
        list
     """
-    sl_rm_punct = [remove_punctuation(s, replace_punct_with, punctuation) for s in string_list]
-    sl_rm_nums = [remove_numerics(s) for s in sl_rm_punct]
-    sl_rm_stopwords = [remove_stopwords(s, word_delimiter, use_lowercase) for s in sl_rm_nums]
-    sl_lem_strings = [wordnet_lemmatize_string(s, word_delimiter, pos) for s in sl_rm_stopwords]
-    sl_stem_strings = [stem_string_porter(s, word_delimiter) for s in sl_lem_strings]
-    return sl_stem_strings    
+    output = []
+    n_strings = len(string_list)
+    print_timestamp_message(f'Cleaning {n_strings} strings')
+    for i, s in enumerate(string_list):
+        sx = replace_contractions(s.lower().strip(), contraction_dict, word_delimiter)
+        sx = remove_non_alpha(sx)
+        sx = remove_stopwords(sx, word_delimiter, use_lowercase)
+        sx = wordnet_lemmatize_string(sx, word_delimiter)
+        output.append(sx)
+        if (i % 1000 == 0 and i != 0):
+            print_timestamp_message(f'Completed {i} of {n_strings}')
+    return output
     
     
 class TextProcessingPipeline:
@@ -189,12 +252,12 @@ class TextProcessingPipeline:
                  min_df = 10,
                  max_features = 1000,
                  ngram_range = (1,3),
-                 pos = 'n',
                  punctuation = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~',
                  replace_punct_with = ' ',
                  stopword_list = nltk.corpus.stopwords.words('english'),
                  use_lowercase = True,
-                 word_delimiter = ' '
+                 word_delimiter = ' ',
+                 contraction_dict = config.config_contraction_dict,
                  ):    
         self.string_list = string_list
         self.test_string_list = test_string_list
@@ -210,39 +273,31 @@ class TextProcessingPipeline:
         self.min_df = min_df
         self.max_features = max_features
         self.ngram_range = ngram_range
-        self.pos = pos
         self.punctuation = punctuation
         self.replace_punct_with = replace_punct_with
         self.stopword_list = stopword_list
         self.use_lowercase = use_lowercase
         self.word_delimiter = word_delimiter
+        self.contraction_dict = contraction_dict
         
         
     def get_cleaned_train_text(self):
-        print_timestamp_message('Removing punctuation (1/5)')
-        sl_rm_punct = [remove_punctuation(s, self.replace_punct_with, self.punctuation) for s in self.string_list]
-        print_timestamp_message('Removing numeric values (2/5)')
-        sl_rm_nums = [remove_numerics(s) for s in sl_rm_punct]
-        print_timestamp_message('Removing stopwords (3/5)')
-        sl_rm_stopwords = [remove_stopwords(s, self.word_delimiter, self.use_lowercase, self.stopword_list) for s in sl_rm_nums]
-        print_timestamp_message('Performing lemmatization (4/5)')
-        sl_lem_strings = [wordnet_lemmatize_string(s, self.word_delimiter, self.pos) for s in sl_rm_stopwords]
-        print_timestamp_message('Stemming words (5/5)')
-        sl_stem_strings = [stem_string_porter(s, self.word_delimiter) for s in sl_lem_strings]
-        return sl_stem_strings
+        cl_txt =  clean_text(self.string_list,
+                             contraction_dict = self.contraction_dict,
+                             replace_punct_with = self.replace_punct_with,
+                             punctuation = self.punctuation,
+                             word_delimiter = self.word_delimiter,
+                             use_lowercase = self.use_lowercase)
+        return cl_txt
     
     def get_cleaned_test_text(self):
-        print_timestamp_message('Removing punctuation (1/5)')
-        sl_rm_punct = [remove_punctuation(s, self.replace_punct_with, self.punctuation) for s in self.test_string_list]
-        print_timestamp_message('Removing numeric values (2/5)')
-        sl_rm_nums = [remove_numerics(s) for s in sl_rm_punct]
-        print_timestamp_message('Removing stopwords (3/5)')
-        sl_rm_stopwords = [remove_stopwords(s, self.word_delimiter, self.use_lowercase, self.stopword_list) for s in sl_rm_nums]
-        print_timestamp_message('Performing lemmatization (4/5)')
-        sl_lem_strings = [wordnet_lemmatize_string(s, self.word_delimiter, self.pos) for s in sl_rm_stopwords]
-        print_timestamp_message('Stemming words (5/5)')
-        sl_stem_strings = [stem_string_porter(s, self.word_delimiter) for s in sl_lem_strings]
-        return sl_stem_strings
+        cl_txt =  clean_text(self.test_string_list,
+                             contraction_dict = self.contraction_dict,
+                             replace_punct_with = self.replace_punct_with,
+                             punctuation = self.punctuation,
+                             word_delimiter = self.word_delimiter,
+                             use_lowercase = self.use_lowercase)
+        return cl_txt
     
     def tokenizer_fit_and_save(self):
         clean_text = self.get_cleaned_train_text()
