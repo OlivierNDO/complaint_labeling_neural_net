@@ -49,27 +49,6 @@ drop_duplicates(subset = config.config_complaints_narrative_column, keep = 'firs
 train_df, test_df = sklearn.model_selection.train_test_split(complaint_df, test_size = 0.2, random_state = 11172020)
 
 
-### Process & Write Files: Product
-########################################################################################################
-# Y Variables
-one_hot_dict_product = mf.one_hot_label_dict(complaint_df['Product'])
-train_y_product = np.array([one_hot_dict_product.get(x) for x in train_df['Product']])
-test_y_product = np.array([one_hot_dict_product.get(x) for x in test_df['Product']])
-
-# X Variables
-pipeline = tp.TextProcessingPipeline(string_list = train_df[config.config_complaints_narrative_column],
-                                     test_string_list = test_df[config.config_complaints_narrative_column],
-                                     save_token_name = config.config_tokenizer_save_name_product)
-
-pipeline.tokenizer_fit_and_save()
-train_sequences_product = pipeline.tokenizer_load_and_transform_train()
-test_sequences_product = pipeline.tokenizer_load_and_transform_test()
-np.save(config.config_train_x_save_name_product, train_sequences_product)
-np.save(config.config_test_x_save_name_product, test_sequences_product)
-np.save(config.config_train_y_save_name_product, train_y_product)
-np.save(config.config_test_y_save_name_product, test_y_product)
-
-
 
 ### Process & Write Files: Checking
 ########################################################################################################
@@ -93,6 +72,7 @@ np.save(config.config_train_x_save_name_checking, train_sequences_checking)
 np.save(config.config_test_x_save_name_checking, test_sequences_checking)
 np.save(config.config_train_y_save_name_checking, train_y_checking)
 np.save(config.config_test_y_save_name_checking, test_y_checking)
+
 
 
 ### Process & Write Files: Card
@@ -119,6 +99,7 @@ np.save(config.config_train_y_save_name_card, train_y_card)
 np.save(config.config_test_y_save_name_card, test_y_card)
 
 
+
 ### Process & Write Files: Credit Reporting
 ########################################################################################################
 # Y Variables
@@ -143,6 +124,7 @@ np.save(config.config_train_y_save_name_cr, train_y_cr)
 np.save(config.config_test_y_save_name_cr, test_y_cr)
 
 
+
 ### Process & Write Files: Debt Collection
 ########################################################################################################
 # Y Variables
@@ -165,6 +147,7 @@ np.save(config.config_train_x_save_name_dc, train_sequences_dc)
 np.save(config.config_test_x_save_name_dc, test_sequences_dc)
 np.save(config.config_train_y_save_name_dc, train_y_dc)
 np.save(config.config_test_y_save_name_dc, test_y_dc)
+
 
 
 ### Process & Write Files: Student Loan
@@ -192,3 +175,22 @@ np.save(config.config_test_y_save_name_sl, test_y_sl)
 
 
 
+### Process & Write Files: Product
+########################################################################################################
+# Y Variables
+one_hot_dict_product = mf.one_hot_label_dict(complaint_df['Product'])
+train_y_product = np.array([one_hot_dict_product.get(x) for x in train_df['Product']])
+test_y_product = np.array([one_hot_dict_product.get(x) for x in test_df['Product']])
+
+# X Variables
+pipeline = tp.TextProcessingPipeline(string_list = train_df[config.config_complaints_narrative_column],
+                                     test_string_list = test_df[config.config_complaints_narrative_column],
+                                     save_token_name = config.config_tokenizer_save_name_product)
+
+pipeline.tokenizer_fit_and_save()
+train_sequences_product = pipeline.tokenizer_load_and_transform_train()
+test_sequences_product = pipeline.tokenizer_load_and_transform_test()
+np.save(config.config_train_x_save_name_product, train_sequences_product)
+np.save(config.config_test_x_save_name_product, test_sequences_product)
+np.save(config.config_train_y_save_name_product, train_y_product)
+np.save(config.config_test_y_save_name_product, test_y_product)
