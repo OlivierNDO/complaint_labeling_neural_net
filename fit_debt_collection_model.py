@@ -59,13 +59,13 @@ dc_model = m.cudnn_lstm_classifier(input_dim = train_x.shape[1],
                                    n_classes = train_y.shape[1],
                                    word_index = dc_pipeline.get_tokenizer_word_index())
 
-dc_classifier = m.RNNClassificationTrainer(model = cr_model,
+dc_classifier = m.RNNClassificationTrainer(model = dc_model,
                                            train_x = train_x,
                                            train_y = train_y,
                                            valid_x = valid_x,
                                            valid_y = valid_y,
                                            word_index = dc_pipeline.get_tokenizer_word_index(),
-                                           model_save_name = config.config_cr_model_save_name)
+                                           model_save_name = config.config_dc_model_save_name)
 
 dc_classifier.fit()
 
