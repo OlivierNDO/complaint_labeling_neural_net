@@ -79,7 +79,7 @@ def predict(input_text, model_object = model, vectorizer = tfid_vectorizer, conf
             conf_str = 'medium'
         else:
             conf_str = 'low'
-        output_val = 'Product associated with complaint: ' + pred_topic + ' (' + conf_str + f' confidence -- {max_pred_label})'
+        output_val = 'Product associated with complaint: <br>' + pred_topic + ' (' + conf_str + f' confidence -- {max_pred_label})'
     return output_val
 
 
@@ -97,8 +97,8 @@ def process_text_input():
     if request.method == 'POST':
         text = request.form['text']
         output = predict(input_text = text)
-        print(text)
-    return render_template("home.html", label = output, print_text = text)
+        #print('<br>Input Text:<br>'  + text)
+    return render_template("home.html", label = output + '<br>', print_text = '<br>' + text)
 
 if __name__ == "__main__":
     app.run(debug=False, threaded=False)

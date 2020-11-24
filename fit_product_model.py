@@ -54,7 +54,7 @@ train_x, train_y, valid_x, valid_y, test_x, test_y = product_pipeline.load_trans
 
 # Fit Model
 product_model = m.cudnn_lstm_classifier(input_dim = train_x.shape[1],
-                                        output_dim = 100,
+                                        output_dim = 200,
                                         input_length = train_x.shape[1],
                                         n_classes = train_y.shape[1],
                                         word_index = product_pipeline.get_tokenizer_word_index())

@@ -10,7 +10,7 @@
       <div class="row">
         <div class="col-lg-8 col-md-7 col-sm-6">
           <h3>Complaint Product Classification</h3>
-          <p class="lead">Application predicts which product a complaint applies to.</p>
+          <p class="lead">Application predicts which product a complaint applies to using a recurrent neural network trained with CFPB complaint data.</p>
         </div>
       </div>
       <form action="" method=post enctype=multipart/form-data>
@@ -26,12 +26,13 @@
           </div>
           <div class="bs-component">
                 <tr>
-                    <td> {{label}} </td>
+                    <td> {{label|safe}} </td>
                   </tr>
         </div>
         <div class="bs-component">
+        <h3 id="tables">Input Text</h3>
                 <tr>
-                    <td> {{print_text}} </td>
+                    <td> {{print_text|safe}} </td>
                   </tr>
         </div>
       </div>

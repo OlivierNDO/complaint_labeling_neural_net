@@ -55,7 +55,7 @@ def gru_classifier(input_dim, output_dim, input_length, n_classes, word_index, d
 def cudnn_lstm_classifier(input_dim, output_dim, input_length, n_classes, word_index, dropout_rate = 0.2, neurons = 100):
     x = Sequential()
     x.add(Embedding(input_dim = len(word_index) + 1, output_dim = output_dim, input_length = input_length, trainable = True))
-    x.add(tf.compat.v1.keras.layers.CuDNNLSTM(neurons, return_sequences = False))
+    x.add(LSTM(neurons, return_sequences = False))
     x.add(Dense(output_dim, activation = 'relu'))
     x.add(Dropout(dropout_rate))
     x.add(Dense(output_dim, activation = 'relu'))
