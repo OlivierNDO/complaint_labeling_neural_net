@@ -194,3 +194,25 @@ np.save(config.config_train_x_save_name_product, train_sequences_product)
 np.save(config.config_test_x_save_name_product, test_sequences_product)
 np.save(config.config_train_y_save_name_product, train_y_product)
 np.save(config.config_test_y_save_name_product, test_y_product)
+
+
+
+### Process & Write Files: Product and Issue
+########################################################################################################
+# Y Variables
+one_hot_dict = mf.one_hot_label_dict(train_df['Product_Issue'])
+train_y_product_issue = np.array([one_hot_dict.get(x) for x in train_df['Product_Issue']])
+test_y_product_issue = np.array([one_hot_dict.get(x) for x in test_df['Product_Issue']])
+
+# X Variables
+pipeline = tp.TextProcessingPipeline(string_list = train_df[config.config_complaints_narrative_column],
+                                     test_string_list = test_df[config.config_complaints_narrative_column],
+                                     save_token_name = config.config_tokenizer_save_name_product_issue)
+
+pipeline.tokenizer_fit_and_save()
+train_sequences_product_issue = pipeline.tokenizer_load_and_transform_train()
+test_sequences_product_issue = pipeline.tokenizer_load_and_transform_test()
+np.save(config.config_train_x_save_name_product_issue, train_sequences_product_issue)
+np.save(config.config_test_x_save_name_product_issue, test_sequences_product_issue)
+np.save(config.config_train_y_save_name_product_issue, train_y_product_issue)
+np.save(config.config_test_y_save_name_product_issue, test_y_product_issue)

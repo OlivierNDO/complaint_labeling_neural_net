@@ -7,6 +7,16 @@ config_issue_model_save_name = f'{config_model_folder}lstm_issue_classifier.hdf5
 config_vectorizer_folder = 'D:/complaint_labeling_neural_net/vectorizers/'
 config_proc_data_dir = 'D:/complaint_labeling_neural_net/processed_data/'
 
+# Product-Issue File Names
+config_train_x_save_name_product_issue = f'{config_proc_data_dir}train_sequences_product_issue.npy'
+config_test_x_save_name_product_issue = f'{config_proc_data_dir}test_sequences_product_issue.npy'
+config_train_y_save_name_product_issue = f'{config_proc_data_dir}train_y_product_issue.npy'
+config_test_y_save_name_product_issue = f'{config_proc_data_dir}test_y_product_issue.npy'
+config_tokenizer_save_name_product_issue = f'{config_vectorizer_folder}keras_tokenizer_product_issue.pkl'
+config_product_issue_model_save_name = f'{config_model_folder}lstm_product_issue_classifier.hdf5'
+
+
+
 # Product File Names
 config_train_x_save_name_product = f'{config_proc_data_dir}train_sequences_product.npy'
 config_test_x_save_name_product = f'{config_proc_data_dir}test_sequences_product.npy'
