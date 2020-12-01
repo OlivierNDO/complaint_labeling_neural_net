@@ -44,8 +44,8 @@ import modeling as m
 # File paths & allowed extensions
 app_dir = 'D:/complaint_labeling_neural_net/'
 UPLOAD_FOLDER = app_dir + 'uploads/'
-model_file_path = config.config_product_model_save_name
-tfid_file_path = config.config_tokenizer_save_name_product
+model_file_path = config.config_product_issue_model_save_name
+tfid_file_path = config.config_tokenizer_save_name_product_issue
 
 model = keras.models.load_model(model_file_path)
 tfid_vectorizer = pickle.load(open(tfid_file_path, 'rb'))
@@ -60,16 +60,14 @@ def predict(input_text, model_object = model, vectorizer = tfid_vectorizer, conf
     vec_input_text = vectorizer.texts_to_sequences(cleaned_input_text)
     vec_input_text = pad_sequences(vec_input_text, maxlen = max_sequence_length)
     pred_list = list(model_object.predict(vec_input_text)[0])
-    topic_labels = ['Checking or savings account',
-                    'Credit card or prepaid card',
-                    'Credit reporting, credit repair services, or other personal consumer reports',
-                    'Debt collection',
-                    'Student loan']
+    topic_labels = sorted(config.config_product_issue_list)
     max_pred = max(pred_list)
     max_pred_index = pred_list.index(max_pred)
     max_pred_label = str(round(max_pred * 100, 2)) + '%'
     
     pred_topic = topic_labels[max_pred_index]
+    pred_product = pred_topic.split(' | ')[0]
+    pred_topic = pred_topic.split(' | ')[1]
     if max_pred < confidence_threshold:
         output_val = "I'm not confident about this one ... "
     else:
@@ -79,7 +77,8 @@ def predict(input_text, model_object = model, vectorizer = tfid_vectorizer, conf
             conf_str = 'medium'
         else:
             conf_str = 'low'
-        output_val = 'Product associated with complaint: <br>' + pred_topic + ' (' + conf_str + f' confidence -- {max_pred_label})'
+        output_val = 'Product: <br>' + pred_product + '<br> Issue: <br>' + \
+        pred_topic + '<br>' + ' (' + conf_str + f' confidence -- {max_pred_label})'
     return output_val
 
 
