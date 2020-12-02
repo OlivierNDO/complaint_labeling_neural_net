@@ -65,7 +65,7 @@ product_issue_classifier = m.RNNClassificationTrainer(model = product_issue_mode
                                                       valid_x = valid_x,
                                                       valid_y = valid_y,
                                                       word_index = product_issue_pipeline.get_tokenizer_word_index(),
-                                                      model_save_name = config.config_product_model_save_name)
+                                                      model_save_name = config.config_product_issue_model_save_name)
 
 product_issue_classifier.fit()
 
