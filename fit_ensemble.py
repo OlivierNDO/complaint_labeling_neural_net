@@ -82,8 +82,113 @@ sl_labels = sorted(list(set(prod_issue_df[prod_issue_df['Product'] == 'Student l
 
 
 
-### Predict on Test Set with Each Model
-######################################################################################################## 
+### Predict on Train, Test, Validation Sets with Each Model
+########################################################################################################
+
+train_x_pred = pd.DataFrame(np.concatenate((product_issue_model.predict(train_x),
+                                            product_model.predict(train_x),
+                                            checking_model.predict(train_x),
+                                            card_model.predict(train_x),
+                                            cr_model.predict(train_x),
+                                            dc_model.predict(train_x),
+                                            sl_model.predict(train_x)), axis = 1))
+
+test_x_pred = pd.DataFrame(np.concatenate((product_issue_model.predict(test_x),
+                                           product_model.predict(test_x),
+                                           checking_model.predict(test_x),
+                                           card_model.predict(test_x),
+                                           cr_model.predict(test_x),
+                                           dc_model.predict(test_x),
+                                           sl_model.predict(test_x)), axis = 1))
+
+valid_x_pred = pd.DataFrame(np.concatenate((product_issue_model.predict(valid_x),
+                                            product_model.predict(valid_x),
+                                            checking_model.predict(valid_x),
+                                            card_model.predict(valid_x),
+                                            cr_model.predict(valid_x),
+                                            dc_model.predict(valid_x),
+                                            sl_model.predict(valid_x)), axis = 1))
+
+
+### Create Y Variables for Train, Test, Validation Sets
+########################################################################################################
+train_y_pred = pd.DataFrame(np.argmax(train_y, axis = 1), columns = ['Product_Issue'])
+test_y_pred = pd.DataFrame(np.argmax(test_y, axis = 1), columns = ['Product_Issue'])
+valid_y_pred = pd.DataFrame(np.argmax(valid_y, axis = 1), columns = ['Product_Issue'])
+
+
+### Fit XGBoost Model
+########################################################################################################
+# Class Weights Based on Training Set
+class_weights = mf.make_class_weight_dict(list(train_y_pred['Product_Issue']),  return_dict = True)
+
+# Parameters and Number of Classes
+n_class = test_y.shape[1]
+param_dict = {'objective' : 'multi:softprob',
+              'eta' : 0.015,
+              'min_child_weight' : 8,
+              'subsample' : 0.5,
+              'colsample_bytree' : 0.5,
+              'max_depth' : 6,
+              'early_stopping_rounds' : 20,
+              'stopping_metric' : 'mlogloss',
+              'num_class' : n_class}
+
+# Early Stopping Watchlist
+dat_train = xgb.DMatrix(train_x_pred, label = train_y_pred, weight = [class_weights.get(x) for x in train_y_pred['Product_Issue']])
+dat_valid = xgb.DMatrix(valid_x_pred, label = valid_y_pred, weight = [class_weights.get(x) for x in valid_y_pred['Product_Issue']])
+watchlist = [(dat_train, 'train'), (dat_valid, 'valid')]
+
+# Training Call
+xgb_trn = xgb.train(params = param_dict,
+                    dtrain = dat_train,
+                    num_boost_round = 50,
+                    evals = watchlist,
+                    early_stopping_rounds = 12,
+                    maximize = False,
+                    verbose_eval = True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 product_issue_pred = product_issue_model.predict(test_x)
 product_pred = product_model.predict(test_x)
 checking_pred = checking_model.predict(test_x)
@@ -124,7 +229,7 @@ xgb_trn = xgb.train(params = param_dict,
                     evals = watchlist,
                     early_stopping_rounds = 12,
                     maximize = False,
-                    verbose_eval = False)
+                    verbose_eval = True)
 
 
 
