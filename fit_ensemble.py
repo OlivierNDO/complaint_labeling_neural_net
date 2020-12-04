@@ -149,94 +149,43 @@ xgb_trn = xgb.train(params = param_dict,
                     verbose_eval = True)
 
 
+temp = product_issue_model.predict(test_x)
+
+ensemble_pred_test = xgb_trn.predict(xgb.DMatrix(test_x_pred))
 
 
 
 
+### Grid Search
+########################################################################################################
 
 
+from xgboost.sklearn import XGBClassifier
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
+grid_param_dict = {'max_depth' : range(3,10,2),
+                   'min_child_weight' : range(1,10,2),
+                   'subsample' : [0.7],
+                   'colsample_bytree' : [0.5, 0.7, 0.9],
+                   'gamma' : range(0, 10, 2)}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-product_issue_pred = product_issue_model.predict(test_x)
-product_pred = product_model.predict(test_x)
-checking_pred = checking_model.predict(test_x)
-card_pred = card_model.predict(test_x)
-cr_pred = cr_model.predict(test_x)
-dc_pred = dc_model.predict(test_x)
-sl_pred = sl_model.predict(test_x)
-
-
-
-temp_x = pd.DataFrame(np.concatenate((product_issue_pred, product_pred, checking_pred, card_pred, cr_pred, dc_pred, sl_pred), axis = 1))
-temp_y = pd.DataFrame(np.argmax(test_y, axis = 1), columns = ['Product_Issue'])
-n_class = test_y.shape[1]
-
-#temp = np.argmax(test_y, axis = 1)
-
-
-param_dict = {'objective' : 'multi:softprob',
-              'eta' : 0.03,
-              'min_child_weight' : 8,
-              'subsample' : 0.7,
-              'colsample_bytree' : 0.6,
-              'max_depth' : 6,
-              'early_stopping_rounds' : 15,
-              'stopping_metric' : 'mlogloss',
-              'num_class' : n_class}
-
-
-
-
-dat_train = xgb.DMatrix(temp_x, label = temp_y)
-dat_valid = xgb.DMatrix(temp_x, label = temp_y)
-watchlist = [(dat_train, 'train'), (dat_valid, 'valid')]
-
-xgb_trn = xgb.train(params = param_dict,
-                    dtrain = dat_train,
-                    num_boost_round = 50,
-                    evals = watchlist,
-                    early_stopping_rounds = 12,
-                    maximize = False,
-                    verbose_eval = True)
-
-
-
-
-
-
-
+gsearch1 = GridSearchCV(estimator = XGBClassifier(learning_rate = 0.015,
+                                                  n_estimators = 5000,
+                                                  max_depth = 6,
+                                                  min_child_weight = 1,
+                                                  gamma = 0,
+                                                  subsample = 0.7,
+                                                  colsample_bytree = 0.7,
+                                                  early_stopping_rounds = 10,
+                                                  verbosity = 2,
+                                                  eval_set = [(train_x_pred, train_y_pred), (valid_x_pred, valid_y_pred)],
+                                                  objective= 'multi:softprob',
+                                                  seed = 12032020),
+                        param_grid = grid_param_dict,
+                        scoring = 'neg_log_loss',
+                        cv = 5)
+gsearch1.fit(train_x_pred, train_y_pred, sample_weight = [class_weights.get(x) for x in train_y_pred['Product_Issue']])
+gsearch1.grid_scores_, gsearch1.best_params_, gsearch1.best_score_
 
 
 
